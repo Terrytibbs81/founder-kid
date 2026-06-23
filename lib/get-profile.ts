@@ -6,7 +6,7 @@ export interface Profile {
   interests: string[];
   weeklyBudget: number;
   lastWeekNotes: string;
-  conversationHistory: unknown[];
+  conversationHistory?: unknown[];
 }
 
 // On Vercel: reads mutable fields (interests, lastWeekNotes) from KV storage.
