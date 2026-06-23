@@ -11,5 +11,13 @@
   ],
   "weeklyBudget": 15,
   "lastWeekNotes": "",
-  "conversationHistory": []
+  "currentLensIndex": 0,
+  "lenses": [
+    "value",
+    "desire",
+    "philosophy",
+    "happiness",
+    "design",
+    "agency"
+  ]
 }

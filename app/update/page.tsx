@@ -87,6 +87,11 @@ export default function UpdateProfile() {
         {saved ? "Saved ✓" : "Save & update"}
       </button>
 
+      <div style={{ marginTop: 48, paddingTop: 24, borderTop: "1px solid #eee", display: "flex", gap: 24 }}>
+        <a href="/dispatch" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>Write a dispatch →</a>
+        <a href="/archive" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>Open the archive →</a>
+      </div>
+
     </div>
   );
 }

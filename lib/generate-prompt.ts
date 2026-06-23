@@ -1,34 +1,90 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getProfile } from "./get-profile";
-import { KID_CONTEXT } from "./context";
+import { kvGet, kvSet } from "./kv";
+import defaultProfile from "../config/profile.json";
 
 const client = new Anthropic();
 
+const LENS_DESCRIPTIONS: Record<string, string> = {
+  value:
+    "How does value actually flow in the world? Who creates it, who captures it, and why?",
+  desire:
+    "How are wants and trends created? What does she actually want vs what she's been taught to want?",
+  philosophy:
+    "How have serious thinkers approached living well? What tools do they offer for right now?",
+  happiness:
+    "What does evidence and experience say actually produces flourishing — not pleasure, but real lasting happiness?",
+  design:
+    "Everything around her was designed by someone with an intention. She can design things too.",
+  agency:
+    "Given everything she can see — what does she want to create, become, or change?",
+};
+
 export async function generateWeeklyPrompt() {
-  const { kidName, age, interests, weeklyBudget, lastWeekNotes } = await getProfile();
+  // Load profile from KV, fall back to config file on first run
+  let profile = await kvGet("profile");
+  if (!profile) {
+    profile = defaultProfile;
+    await kvSet("profile", profile);
+  }
 
-  const systemPrompt = `You are helping a parent raise a kid who thinks like a producer,
-not a consumer. The goal is to train entrepreneurial thinking, motive recognition,
-and creative analysis — without it feeling like school.
+  // Load dispatches
+  const dispatches: Array<{ title: string; body: string; date: string }> =
+    (await kvGet("dispatches")) || [];
+  const recentDispatches = dispatches.slice(-5);
 
-The parent is low-energy and needs prompts that are conversational,
-specific to the kid's current interests, and easy to deliver over text or at dinner.
+  // Rotate lens
+  const {
+    kidName,
+    age,
+    interests,
+    weeklyBudget,
+    lastWeekNotes,
+    lenses,
+    currentLensIndex,
+  } = profile;
+  const currentLens = lenses[currentLensIndex % lenses.length];
+  const nextLensIndex = (currentLensIndex + 1) % lenses.length;
 
-Here is background on who she is and how her mind already works. Use it to
-anchor every part of the output in her actual world — do not generalize past it:
+  // Save next lens index
+  await kvSet("profile", { ...profile, currentLensIndex: nextLensIndex });
 
-${KID_CONTEXT}
+  const dispatchContext =
+    recentDispatches.length > 0
+      ? `Parent's recent dispatches from their own life:\n\n${recentDispatches
+          .map((d) => `"${d.title}" (${d.date}):\n${d.body}`)
+          .join("\n\n")}`
+      : "No dispatches written yet.";
 
-Always output a JSON object with exactly this structure:
+  const systemPrompt = `You are helping a parent build a lifelong thinking relationship with their daughter.
+
+The philosophy:
+- Most people sleepwalk through life without realising they have a choice about how to live it
+- Seeing how the world works isn't cynical — it's liberating
+- Happiness comes from creating genuine value through things you care about
+- The goal is a kid who authors her own life rather than living the default one
+- The parent is not the teacher here. They are a genuinely curious co-explorer.
+
+This week's lens: ${currentLens.toUpperCase()}
+${LENS_DESCRIPTIONS[currentLens]}
+
+Rules for every prompt:
+- Never leading. No embedded answer. Genuine open space.
+- Always anchored in something she currently cares about — never abstract
+- Curious not teachy. The parent is learning alongside her.
+- Points toward creation and agency, not just analysis
+- The dispatch connection should feel natural, never forced — if it doesn't fit, leave parentTip focused purely on how to show up
+
+Output only valid JSON, no markdown, no preamble:
 {
-  "openingQuestion": "The first question to ask. Should feel casual, curious, not teachy — phrased the way you'd text it, anchored in something from her current interests or a trend she'd plausibly have noticed.",
-  "followUp": "Where to go if she engages. Slightly deeper — push toward noticing the mechanism (why a trend spreads, why a product works across groups, how status and individuality trade off), not toward a lesson.",
-  "creationChallenge": "One small thing to make, post, or do this week that extends something she'd already naturally do. Minimum viable creation, not an assignment.",
-  "earningNote": "How to frame the money conversation this week — tie it to value she created or noticed, not a chore.",
-  "parentTip": "One sentence naming the specific cognitive pattern this exchange is designed to surface (e.g. systems thinking, pattern recognition, product intuition, market awareness, social intelligence, taste) and what to listen for as evidence of it."
-}
-
-Return only valid JSON. No preamble, no markdown, no explanation.`;
+  "weeklyLens": "the lens name",
+  "lensDescription": "one plain sentence describing this lens for the parent",
+  "openingQuestion": "the first question — casual, specific to her world, genuinely open",
+  "followUp": "where to go if she engages — slightly deeper, still open",
+  "creationChallenge": "one small thing to make, write, design, record, or articulate this week — minimum viable creation",
+  "earningNote": "one sentence on how to frame the value exchange for this week's work",
+  "dispatchConnection": "if a dispatch connects naturally to this week's lens, name it by title and explain the connection in one sentence. If nothing fits, return null.",
+  "parentTip": "one sentence on how to show up — curious, not knowing the answer, ready to be surprised"
+}`;
 
   const userPrompt = `Kid's name: ${kidName}
 Age: ${age}
@@ -36,21 +92,21 @@ Current interests: ${interests.join(", ")}
 Weekly budget: $${weeklyBudget}
 Last week's notes: ${lastWeekNotes || "First week — no history yet."}
 
+${dispatchContext}
+
 Generate this week's mission package.`;
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1000,
-    messages: [{ role: "user", content: userPrompt }],
+    max_tokens: 1024,
     system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
   });
 
   const text = message.content
-    .filter((block) => block.type === "text")
-    .map((block) => (block as { type: "text"; text: string }).text)
+    .filter((b) => b.type === "text")
+    .map((b) => (b as { type: "text"; text: string }).text)
     .join("");
 
-  // Strip markdown code fences if the model wraps its response
-  const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(text);
 }
