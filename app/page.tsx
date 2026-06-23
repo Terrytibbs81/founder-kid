@@ -89,7 +89,7 @@ export default function Home() {
           </button>
         </div>
         {error && <p style={{ fontSize: 13, color: "#c00", marginTop: 8 }}>{error}</p>}
-        <p style={{ fontSize: 12, color: "#aaa", marginTop: 12 }}>No password. Magic link sent to your inbox.</p>
+          <p style={{ fontSize: 12, color: "#aaa", marginTop: 12 }}>No password. Magic link sent to your inbox.</p>
       </div>
     </div>
   );

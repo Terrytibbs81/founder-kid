@@ -11,6 +11,7 @@ export interface WeeklyPrompt {
   earningNote: string;
   dispatchConnection: string | null;
   parentTip: string;
+  reactionQuestion?: string;
 }
 
 export async function sendMagicLinkEmail(
@@ -107,6 +108,10 @@ export async function sendWeeklyEmail(
         <a href="${process.env.NEXT_PUBLIC_BASE_URL}/update" style="font-size: 13px; color: #888; text-decoration: none;">Update their profile →</a>
         <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dispatch" style="font-size: 13px; color: #888; text-decoration: none; margin-left: 24px;">Write a dispatch →</a>
       </div>
+      ${prompt.reactionQuestion ? `
+      <div style="border-top: 1px solid #eee; padding-top: 24px; margin-top: 24px;">
+        <p style="font-size: 13px; color: #aaa; margin: 0;">Quick one: ${prompt.reactionQuestion}. Hit reply and answer in one sentence.</p>
+      </div>` : ""}
     </div>
   `;
 

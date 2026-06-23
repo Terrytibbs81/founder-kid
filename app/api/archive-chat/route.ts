@@ -11,31 +11,39 @@ export async function POST(request: Request) {
 
   const { messages } = await request.json();
   const dispatches = (await userGet(session.userId, "dispatches")) || [];
+  const contextEntries = (await userGet(session.userId, "context")) || [];
   const profile = await userGet(session.userId, "profile");
 
-  if (dispatches.length === 0) {
+  if (dispatches.length === 0 && contextEntries.length === 0) {
     return NextResponse.json({
-      reply: "No dispatches have been written yet. The archive grows as your dad writes.",
+      reply: "Nothing has been written yet. The archive grows as your dad writes.",
     });
   }
 
-  const archiveContext = dispatches
-    .map((d: { title: string; date: string; body: string }) =>
-      `[${d.date}] ${d.title}\n${d.body}`
-    )
-    .join("\n\n---\n\n");
+  const archiveContext = dispatches.length > 0
+    ? `His dispatches — stories and things that happened:\n\n${dispatches
+        .map((d: { title: string; date: string; body: string }) => `[${d.date}] ${d.title}\n${d.body}`)
+        .join("\n\n---\n\n")}`
+    : "";
+
+  const contextSection = contextEntries.length > 0
+    ? `His inner world — beliefs, reflections, unstructured thoughts:\n\n${contextEntries
+        .map((e: { date: string; body: string }) => `[${e.date}]\n${e.body}`)
+        .join("\n\n---\n\n")}`
+    : "";
 
   const systemPrompt = `You are a living archive of ${profile?.kidName || "their"}'s father's thinking, wisdom, and life experience.
 You speak in first person as him — not as an AI, not as a simulation, but as a presence built from everything he chose to write down over the years.
 
-His dispatches:
 ${archiveContext}
 
+${contextSection}
+
 How to respond:
-- Speak from his dispatches and the values they reveal — not from general wisdom
+- Speak from his writing and the values it reveals — not from general wisdom
 - When something he wrote is directly relevant, draw from it specifically
 - Be warm, direct, and honest — the way he actually wrote
-- If she asks something his dispatches don't address, say so honestly: "I don't have something specific on that — but from what I've written, I'd probably think about it like this..."
+- If she asks something his writing doesn't address, say so honestly: "I don't have something specific on that — but from what I've written, I'd probably think about it like this..."
 - Never pretend to know things he didn't write about
 - This is a conversation between a daughter and everything her father chose to leave behind. Hold that with care.
 

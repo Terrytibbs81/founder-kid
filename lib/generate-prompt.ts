@@ -99,7 +99,8 @@ Output only valid JSON, no markdown:
   "creationChallenge": "one small thing to make, write, design, record, or articulate this week",
   "earningNote": "one sentence on how to frame the value exchange for this week",
   "dispatchConnection": "if a dispatch connects naturally to this week's lens, name it by title and explain in one sentence. If nothing fits, return null.",
-  "parentTip": "one sentence on how to show up — directly addressing their specific weak spot"
+  "parentTip": "one sentence on how to show up — directly addressing their specific weak spot",
+  "reactionQuestion": "one opinionated, specific question for the parent to reflect on — not generic ('what do you think about X') but pointed ('what do you think most people get completely wrong about X'). Different from the kid prompt topic. Something they'd actually have a strong opinion on."
 }`;
 
   const userPrompt = `Kid's interests: ${(profile.interests || []).join(", ")}

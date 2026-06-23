@@ -21,6 +21,10 @@ export async function GET(request: Request) {
       }
       const prompt = await generateWeeklyPrompt(userId);
       await sendWeeklyEmail(prompt, profile.email, profile.kidName, profile.weeklyBudget || 15);
+      if (prompt.reactionQuestion) {
+        const { userSet } = await import("../../../lib/kv-user");
+        await userSet(userId, "currentReactionQuestion", prompt.reactionQuestion);
+      }
       results.push({ userId, status: "sent" });
     } catch (error) {
       console.error(`Failed for user ${userId}:`, error);
