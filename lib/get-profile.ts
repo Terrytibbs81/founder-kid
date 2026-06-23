@@ -7,6 +7,8 @@ export interface Profile {
   weeklyBudget: number;
   lastWeekNotes: string;
   conversationHistory?: unknown[];
+  currentLensIndex?: number;
+  lenses?: string[];
 }
 
 // On Vercel: reads mutable fields (interests, lastWeekNotes) from KV storage.
@@ -17,10 +19,10 @@ export async function getProfile(): Promise<Profile> {
     const interests = await kv.get<string[]>("interests");
     const lastWeekNotes = await kv.get<string>("lastWeekNotes");
     return {
-      ...(staticProfile as Profile),
+      ...(staticProfile as unknown as Profile),
       interests: interests ?? staticProfile.interests,
       lastWeekNotes: lastWeekNotes ?? staticProfile.lastWeekNotes,
     };
   }
-  return staticProfile as Profile;
+  return staticProfile as unknown as Profile;
 }
