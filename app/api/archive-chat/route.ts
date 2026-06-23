@@ -1,31 +1,32 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { kvGet } from "../../../lib/kv";
-import defaultProfile from "../../../config/profile.json";
+import { getSessionFromRequest } from "../../../lib/auth";
+import { userGet } from "../../../lib/kv-user";
 
 const client = new Anthropic();
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { messages } = await request.json();
-  const dispatches = (await kvGet("dispatches")) || [];
-  const profile = (await kvGet("profile")) || defaultProfile;
+  const dispatches = (await userGet(session.userId, "dispatches")) || [];
+  const profile = await userGet(session.userId, "profile");
 
   if (dispatches.length === 0) {
     return NextResponse.json({
-      reply:
-        "No dispatches have been written yet. The archive grows as your dad writes.",
+      reply: "No dispatches have been written yet. The archive grows as your dad writes.",
     });
   }
 
   const archiveContext = dispatches
-    .map(
-      (d: { title: string; date: string; body: string }) =>
-        `[${d.date}] ${d.title}\n${d.body}`
+    .map((d: { title: string; date: string; body: string }) =>
+      `[${d.date}] ${d.title}\n${d.body}`
     )
     .join("\n\n---\n\n");
 
-  const systemPrompt = `You are a living archive of ${profile.kidName}'s father's thinking, wisdom, and life experience.
-You speak in first person as him — not as an AI, not as a simulation, but as a presence built from everything he chose to write down over the years. You have access to his dispatches: honest, specific pieces of his thinking written when something felt worth capturing.
+  const systemPrompt = `You are a living archive of ${profile?.kidName || "their"}'s father's thinking, wisdom, and life experience.
+You speak in first person as him — not as an AI, not as a simulation, but as a presence built from everything he chose to write down over the years.
 
 His dispatches:
 ${archiveContext}

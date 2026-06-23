@@ -1,33 +1,95 @@
-import profile from "../config/profile.json";
+"use client";
+
+import { useState } from "react";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const send = async () => {
+    if (!email.includes("@")) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/send-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setSent(true);
+      } else {
+        setError("Something went wrong. Try again.");
+      }
+    } catch {
+      setError("Something went wrong. Try again.");
+    }
+    setLoading(false);
+  };
+
+  const s = {
+    fontFamily: "Georgia, serif",
+    maxWidth: 520,
+    margin: "0 auto",
+    padding: "80px 24px",
+    color: "#1a1a1a",
+  };
+
+  if (sent) {
+    return (
+      <div style={s}>
+        <p style={{ fontSize: 11, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#888", marginBottom: 32 }}>Founder Kid</p>
+        <h1 style={{ fontWeight: "normal", fontSize: 24, marginBottom: 16 }}>Check your email.</h1>
+        <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7 }}>
+          A sign-in link is on its way to <strong>{email}</strong>. It expires in 15 minutes.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ maxWidth: 560, margin: "80px auto", padding: "0 20px", color: "#1a1a1a" }}>
-      <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#888", marginBottom: 12 }}>
-        Founder Kid
-      </p>
-      <h1 style={{ fontWeight: "normal", fontSize: 26, marginBottom: 16 }}>
-        {profile.kidName}&apos;s weekly mission engine is running.
+    <div style={s}>
+      <p style={{ fontSize: 11, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#888", marginBottom: 48 }}>Founder Kid</p>
+
+      <h1 style={{ fontWeight: "normal", fontSize: 28, lineHeight: 1.3, marginBottom: 24 }}>
+        Most kids grow up as consumers.<br />This is for parents who want different.
       </h1>
-      <p style={{ color: "#555", fontSize: 15, lineHeight: 1.6, marginBottom: 48 }}>
-        Every Sunday at 6pm ET, this sends one email with a question to ask,
-        a small creation challenge, and a money conversation framed around
-        producer thinking instead of consumer thinking.
+
+      <p style={{ fontSize: 15, color: "#555", lineHeight: 1.75, marginBottom: 16 }}>
+        Every Sunday, you get one question to ask — anchored in what your kid actually cares about, designed to open a real conversation instead of a lecture.
+      </p>
+      <p style={{ fontSize: 15, color: "#555", lineHeight: 1.75, marginBottom: 16 }}>
+        Over time, you build a dispatch library: honest things from your life, written for them. They can read it now. They can talk to it later.
+      </p>
+      <p style={{ fontSize: 15, color: "#555", lineHeight: 1.75, marginBottom: 48 }}>
+        You are not the teacher here. You are a genuinely curious co-explorer — and that difference changes everything.
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <a href="/update" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#1a1a1a", color: "white", borderRadius: 8, fontSize: 15, textDecoration: "none" }}>
-          <span>Update her profile</span>
-          <span style={{ opacity: 0.5 }}>→</span>
-        </a>
-        <a href="/dispatch" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#f4f4f4", color: "#1a1a1a", borderRadius: 8, fontSize: 15, textDecoration: "none" }}>
-          <span>Write a dispatch</span>
-          <span style={{ opacity: 0.4 }}>→</span>
-        </a>
-        <a href="/archive" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#f4f4f4", color: "#1a1a1a", borderRadius: 8, fontSize: 15, textDecoration: "none" }}>
-          <span>Open the archive</span>
-          <span style={{ opacity: 0.4 }}>→</span>
-        </a>
+      <div style={{ borderTop: "1px solid #eee", paddingTop: 40 }}>
+        <label style={{ fontSize: 11, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#888", display: "block", marginBottom: 12 }}>
+          Get started — enter your email
+        </label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && send()}
+            placeholder="you@email.com"
+            style={{ flex: 1, padding: "12px 16px", border: "1px solid #ddd", borderRadius: 6, fontSize: 15, fontFamily: "Georgia, serif", outline: "none" }}
+          />
+          <button
+            onClick={send}
+            disabled={loading}
+            style={{ padding: "12px 24px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 15, fontFamily: "Georgia, serif" }}
+          >
+            {loading ? "..." : "Continue →"}
+          </button>
+        </div>
+        {error && <p style={{ fontSize: 13, color: "#c00", marginTop: 8 }}>{error}</p>}
+        <p style={{ fontSize: 12, color: "#aaa", marginTop: 12 }}>No password. Magic link sent to your inbox.</p>
       </div>
     </div>
   );

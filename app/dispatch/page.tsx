@@ -17,8 +17,8 @@ export default function DispatchPage() {
 
   const load = () =>
     fetch("/api/dispatches")
-      .then((r) => r.json())
-      .then(setDispatches);
+      .then((r) => { if (!r.ok) { window.location.href = "/"; return null; } return r.json(); })
+      .then((d) => { if (d) setDispatches(d); });
 
   useEffect(() => {
     load();

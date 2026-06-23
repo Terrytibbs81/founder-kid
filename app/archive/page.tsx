@@ -12,6 +12,10 @@ export default function ArchivePage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/auth/me").then((r) => { if (!r.ok) window.location.href = "/"; });
+  }, []);
+
   const send = async () => {
     if (!input.trim() || loading) return;
     const userMsg: Message = { role: "user", content: input };
