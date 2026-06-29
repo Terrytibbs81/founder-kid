@@ -1,4 +1,5 @@
 import staticProfile from "../config/profile.json";
+import { kvGet } from "./kv";
 
 export interface Profile {
   kidName: string;
@@ -11,18 +12,9 @@ export interface Profile {
   lenses?: string[];
 }
 
-// On Vercel: reads mutable fields (interests, lastWeekNotes) from KV storage.
-// Locally: reads everything from config/profile.json as before.
+// Reads mutable fields from KV, falls back to config/profile.json on first run.
 export async function getProfile(): Promise<Profile> {
-  if (process.env.KV_REST_API_URL) {
-    const { kv } = await import("@vercel/kv");
-    const interests = await kv.get<string[]>("interests");
-    const lastWeekNotes = await kv.get<string>("lastWeekNotes");
-    return {
-      ...(staticProfile as unknown as Profile),
-      interests: interests ?? staticProfile.interests,
-      lastWeekNotes: lastWeekNotes ?? staticProfile.lastWeekNotes,
-    };
-  }
+  const profile = await kvGet("profile");
+  if (profile) return profile as Profile;
   return staticProfile as unknown as Profile;
 }
