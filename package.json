@@ -10,9 +10,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
-    "@upstash/redis": "^1.38.0",
-    "@vercel/kv": "^3.0.0",
-    "next": "14.2.18",
+    "@vercel/blob": "^2.5.0",
+    "next": "^15.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "resend": "^4.0.1"
@@ -22,7 +21,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.18",
+    "eslint-config-next": "^15.0.0",
     "typescript": "^5.7.2"
   }
 }

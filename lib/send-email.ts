@@ -29,7 +29,7 @@ export async function sendMagicLinkEmail(
     </div>
   `;
   await resend.emails.send({
-    from: "Founder Kid <onboarding@resend.dev>",
+    from: "The Red Strand <hello@theredstrand.com>",
     to: email,
     subject: "Your Founder Kid sign-in link",
     html,

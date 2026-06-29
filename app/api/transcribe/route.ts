@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import { getSessionFromRequest } from "../../../lib/auth";
 
 export async function POST(request: Request) {
@@ -39,7 +40,6 @@ export async function POST(request: Request) {
     // Store audio in Vercel Blob (if configured)
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
-        const { put } = await import("@vercel/blob");
         const timestamp = Date.now();
         const arrayBuffer = await audioFile.arrayBuffer();
         await put(
